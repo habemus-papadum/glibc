@@ -1,4 +1,5 @@
-/* Copyright (C) 1992-2017 Free Software Foundation, Inc.
+/* __saved_mask defition for Linux/x86.
+   Copyright (C) 2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -15,20 +16,19 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <stddef.h>
-#include <setjmpP.h>
+/* Saved signal mask.  */
+#define __saved_mask __saved_mask.__saved.__saved_mask
+
 #include <signal.h>
 
-/* This function is called by the `sigsetjmp' macro
-   before doing a `__setjmp' on ENV[0].__jmpbuf.
-   Always return zero.  */
+#define _SIGPROCMASK_NSIG_WORDS (_NSIG / (8 * sizeof (unsigned long int)))
 
-int
-__sigjmp_save (sigjmp_buf env, int savemask)
-{
-  env[0].__mask_was_saved = (savemask &&
-			     __sigprocmask (SIG_BLOCK, (sigset_t *) NULL,
-					    (sigset_t *) &env[0].__saved_mask) == 0);
+typedef struct
+  {
+    unsigned long int __val[_SIGPROCMASK_NSIG_WORDS];
+  } __sigprocmask_sigset_t;
 
-  return 0;
-}
+extern jmp_buf ___buf;
+extern  __typeof (___buf[0].__saved_mask) ___saved_mask;
+_Static_assert (sizeof (___saved_mask) >= sizeof (__sigprocmask_sigset_t),
+		"size of ___saved_mask < size of __sigprocmask_sigset_t");
